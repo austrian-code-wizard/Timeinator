@@ -1,0 +1,2 @@
+class TimeinatorException(Exception):
+	pass
