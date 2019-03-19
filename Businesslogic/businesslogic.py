@@ -29,6 +29,7 @@ class Businesslogic:
 
 	@handle_exceptions
 	def create_task(self, task_json):
+		task_json["actual_time"] = 0
 		result = self.dao.insert_entity(task_json, Task)
 		return f"The task with the ID {result} was created successfully"
 
@@ -71,6 +72,11 @@ class Businesslogic:
 		return result
 
 	@handle_exceptions
+	def get_users_for_task(self, id):
+		result = self.dao.get_nested_entities(id, Task, "users")
+		return result
+
+	@handle_exceptions
 	def get_interval_by_id(self, id):
 		result = self.dao.get_entity(Interval, id)
 		return result
@@ -91,7 +97,7 @@ class Businesslogic:
 		for id in task_ids:
 			found = False
 			for user in self.dao.get_nested_entities(id, Task, "users"):
-				if user[id] == user_id:
+				if user["id"] == user_id:
 					found = True
 			if found is False:
 				raise TimeinatorException(f"The user is not part of task {id}. Please add them to the task first.")
@@ -111,7 +117,14 @@ class Businesslogic:
 		if interval["ended_at"] is not None:
 			raise TimeinatorException("This interval was already ended")
 		else:
-			self.dao.update_entity({"ended_at": datetime.utcnow().isoformat()}, Interval, id)
+			time_now = datetime.utcnow().isoformat()
+			self.dao.update_entity({"ended_at": time_now}, Interval, id)
+			tasks = self.dao.get_nested_entities(id, Interval, "tasks")
+			interval = self.dao.get_entity(Interval, id)
+			delta = (datetime.fromisoformat(interval["ended_at"])-datetime.fromisoformat(interval["created_at"])).total_seconds()
+			for task in tasks:
+				new_actual_time = task["actual_time"] + delta
+				self.dao.update_entity({"actual_time": new_actual_time}, Task, task["id"])
 			return f"Ended interval with ID {id}"
 
 	@handle_exceptions

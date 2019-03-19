@@ -7,7 +7,7 @@ def process_response(func):
 	@wraps(func)
 	def execute(*args, **kwargs):
 		result = func(*args, **kwargs)
-		if "info" in result.keys():
+		if isinstance(result, dict) and "info" in result.keys():
 			if result["info"] == "ooops, something went wrong":
 				return jsonify(result), 500
 			else:
@@ -30,13 +30,13 @@ def create_user():
 @app.route("/create-task", methods=["POST"])
 @process_response
 def create_task():
-	task = request.json()
+	task = request.json
 	return businesslogic.create_task(task)
 
 @app.route("/start-interval", methods=["POST"])
 @process_response
 def start_interval():
-	json_request = request.json()
+	json_request = request.json
 	return businesslogic.start_interval(json_request["interval"], json_request["task_ids"], json_request["user_id"])
 
 @app.route("/stop-interval/<int:interval_id>", methods=["GET"])
@@ -47,19 +47,19 @@ def stop_interval(interval_id):
 @app.route("/update-user", methods=["POST"])
 @process_response
 def update_user():
-	user = request.json()
+	user = request.json
 	return businesslogic.update_user(user)
 
 @app.route("/update-task", methods=["POST"])
 @process_response
 def update_task():
-	task = request.json()
+	task = request.json
 	return businesslogic.update_task(task)
 
 @app.route("/update-interval", methods=["POST"])
 @process_response
 def update_interval():
-	interval = request.json()
+	interval = request.json
 	return businesslogic.update_interval(interval)
 
 @app.route("/delete-user/<int:user_id>", methods=["DELETE"])
@@ -101,6 +101,11 @@ def get_all_users():
 @process_response
 def get_all_tasks():
 	return businesslogic.get_all_tasks()
+
+@app.route("/get-users-for-task/<int:id>", methods=["GET"])
+@process_response
+def get_user_for_task(id):
+	return businesslogic.get_users_for_task(id)
 
 @app.route("/get-intervals-for-user/<int:user_id>", methods=["GET"])
 @process_response
